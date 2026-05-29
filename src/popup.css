@@ -1,0 +1,198 @@
+/* HSL tailored color palette & dark mode system */
+:root {
+  --bg-primary: hsl(222, 47%, 11%);
+  --bg-secondary: rgba(30, 41, 59, 0.7);
+  --border-color: rgba(255, 255, 255, 0.08);
+  --accent-cyan: #38bdf8;
+  --accent-orange: #f97316;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --btn-grad-start: #0284c7;
+  --btn-grad-end: #0369a1;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  width: 380px;
+  height: 480px;
+  background-color: var(--bg-primary);
+  color: var(--text-main);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  overflow: hidden;
+}
+
+.popup-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.brand-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-logo {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+}
+
+.brand-name {
+  font-weight: 700;
+  font-size: 14px;
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-orange));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.popup-main {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.section-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.badge {
+  background: rgba(56, 189, 248, 0.1);
+  color: var(--accent-cyan);
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+}
+
+.watchlist-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Watchlist Item Card - Glassmorphism style */
+.watchlist-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-secondary);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 12px;
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.watchlist-item:hover {
+  transform: translateY(-2px);
+  border-color: rgba(56, 189, 248, 0.2);
+}
+
+.item-info {
+  flex-grow: 1;
+  min-width: 0; /* Ensures text-overflow ellipsis works inside flexbox */
+}
+
+.item-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0 0 4px 0;
+  color: #e2e8f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.item-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.item-metric {
+  color: var(--accent-cyan);
+  font-weight: 600;
+}
+
+.item-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: 10px;
+}
+
+.btn-remove {
+  background: none;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  padding: 4px;
+  font-size: 12px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.btn-remove:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted);
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.empty-state .sub {
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+/* Glass buttons */
+.btn {
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-export {
+  background: linear-gradient(135deg, var(--btn-grad-start), var(--btn-grad-end));
+  color: #ffffff;
+}
+
+.btn-export:hover {
+  background: linear-gradient(135deg, var(--btn-grad-end), #075985);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+}

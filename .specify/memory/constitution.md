@@ -1,50 +1,51 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+SYNC IMPACT REPORT
+- Version change: None -> 1.0.0
+- List of modified principles:
+  - PRINCIPLE_1: Library-First Architecture (NEW)
+  - PRINCIPLE_2: Decoupled Interfaces & Message Passing (NEW)
+  - PRINCIPLE_3: Test-First Development (NEW)
+  - PRINCIPLE_4: Automated Integration Testing (NEW)
+  - PRINCIPLE_5: Simplicity & Low-Cost (YAGNI) (NEW)
+- Added sections:
+  - Technical Constraints & Standards
+  - Development Workflow & Quality Gates
+  - Governance
+- Removed sections: None
+- Templates requiring updates:
+  - .specify/templates/plan-template.md (✅ updated)
+- Follow-up TODOs: None
+-->
+# myFastM Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Library-First Architecture
+Every feature module MUST start as a standalone, self-contained library or logical script (e.g., decoupled DOM scrapers or logic modules). Modules MUST be independently testable and documented. Clear architectural separation MUST be maintained.
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### II. Decoupled Interfaces & Message Passing
+Core modules MUST communicate via decoupled APIs or clean message-passing channels (e.g., Chrome Extension background/content script port messaging). Input/Output protocols MUST use clean structured models (like JSON).
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### III. Test-First Development (NON-NEGOTIABLE)
+Test suites MUST be prepared alongside or before the implementation code. Every user story MUST be independently testable. Regression testing MUST be performed to safeguard against breaking changes.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### IV. Automated Integration Testing
+Niche extraction and data boundaries MUST be validated using integration tests to verify the compatibility between content injection and simulated page DOMs.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### V. Simplicity & Low-Cost (YAGNI)
+Implementations MUST adhere to the YAGNI principle. Any architectural complexity (like external servers, paid proxies) MUST be avoided unless explicitly justified in the Complexity Tracking section of the Implementation Plan.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+## Technical Constraints & Standards
+- **Language**: Python 3.10+ (managed via pyenv), Node.js (managed via nvm), or native Web standards.
+- **Localization**: Code, comments, identifiers, commits, and technical docs MUST be in English.
+- **Environment**: Prefer standard tools installed via Homebrew where possible.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
-
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
-
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+## Development Workflow & Quality Gates
+- **Plan/Code Switch**: For any moderate or complex task, strictly switch between Planning Mode and Coding Mode. Creating or modifying code blocks requires an approved Implementation Plan.
+- **Git Commits**: Follow semantic commit naming conventions. Auto-commit changes after boundary transitions using Spec Kit command workflows.
+- **Review Focus**: Prioritize verification of regressions, missing tests, security, breaking API changes, and performance-sensitive paths.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
+This Constitution supersedes all ad-hoc coding styles. Amendments require a formal modification proposal, documentation updates, and a SemVer version bump.
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
-
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 1.0.0 | **Ratified**: 2026-05-29 | **Last Amended**: 2026-05-29

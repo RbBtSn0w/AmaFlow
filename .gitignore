@@ -1,0 +1,17 @@
+# IDE and Operating System files
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
+.vscode/
+.idea/
+
+# JavaScript/Node files
+node_modules/
+dist/
+build/
+*.log
+.env*
+
+# Safari Extension Conversion build artifacts
+safari-build/

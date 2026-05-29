@@ -40,7 +40,11 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+- [ ] **Library-First**: Does this feature start as a standalone library/module (e.g., modular scraping logic)?
+- [ ] **Interface & Message Passing**: Are communication channels decoupled (e.g. port messaging) and using structured JSON?
+- [ ] **Test-First**: Are test plans/cases written alongside or before logic code, ensuring independent story testing?
+- [ ] **Integration Testing**: Are page parsing DOMs and data extractions validated via automated integration tests?
+- [ ] **Simplicity & Low-Cost (YAGNI)**: Are external servers, proxies, or paid APIs avoided to control technical and hosting costs?
 
 ## Project Structure
 
