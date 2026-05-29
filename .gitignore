@@ -5,6 +5,9 @@ Thumbs.db
 *.swp
 .vscode/
 .idea/
+*.xcuserstate
+xcuserdata/
+DerivedData/
 
 # JavaScript/Node files
 node_modules/
@@ -12,6 +15,16 @@ dist/
 build/
 *.log
 .env*
+.node_repl_history
+
+# Python files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+.pytest_cache/
 
 # Safari Extension Conversion build artifacts
 safari-build/
