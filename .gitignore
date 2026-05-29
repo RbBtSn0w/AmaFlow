@@ -28,9 +28,3 @@ venv/
 
 # Safari Extension Conversion build artifacts
 safari-build/
-
-# Agent / Spec Kit tools
-.agents/
-.specify/
-AGENTS.md
-
