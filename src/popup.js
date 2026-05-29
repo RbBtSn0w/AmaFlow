@@ -1,5 +1,8 @@
 // popup.js - Interactive workspace manager for myFastM
 
+let currentSortType = "none"; // "none", "sales", "price", "rating", "reviews"
+let currentSortOrder = "none"; // "none", "asc", "desc"
+
 // Load watchlist and localize page on popup open
 document.addEventListener("DOMContentLoaded", () => {
   localizePage();
@@ -14,6 +17,20 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   });
+
+  // Set up sorting buttons
+  document.getElementById("sortSalesBtn").addEventListener("click", () => {
+    handleSortChange("sales");
+  });
+  document.getElementById("sortPriceBtn").addEventListener("click", () => {
+    handleSortChange("price");
+  });
+  document.getElementById("sortRatingBtn").addEventListener("click", () => {
+    handleSortChange("rating");
+  });
+  document.getElementById("sortReviewsBtn").addEventListener("click", () => {
+    handleSortChange("reviews");
+  });
 });
 
 // T022: Localize static elements in HTML
@@ -27,20 +44,78 @@ function localizePage() {
   });
 }
 
+// Handle sorting configuration change
+function handleSortChange(type) {
+  if (currentSortType === type) {
+    // Cycle: desc -> asc -> none
+    if (currentSortOrder === "desc") {
+      currentSortOrder = "asc";
+    } else if (currentSortOrder === "asc") {
+      currentSortOrder = "none";
+      currentSortType = "none";
+    }
+  } else {
+    currentSortType = type;
+    currentSortOrder = "desc";
+  }
+  
+  updateSortButtonsUI();
+  renderWatchlist();
+}
+
+// Update the active state and icons of sort buttons
+function updateSortButtonsUI() {
+  const salesBtn = document.getElementById("sortSalesBtn");
+  const priceBtn = document.getElementById("sortPriceBtn");
+  const ratingBtn = document.getElementById("sortRatingBtn");
+  const reviewsBtn = document.getElementById("sortReviewsBtn");
+  
+  const salesIcon = salesBtn.querySelector(".sort-icon");
+  const priceIcon = priceBtn.querySelector(".sort-icon");
+  const ratingIcon = ratingBtn.querySelector(".sort-icon");
+  const reviewsIcon = reviewsBtn.querySelector(".sort-icon");
+  
+  salesBtn.classList.remove("active");
+  priceBtn.classList.remove("active");
+  ratingBtn.classList.remove("active");
+  reviewsBtn.classList.remove("active");
+  
+  salesIcon.textContent = "";
+  priceIcon.textContent = "";
+  ratingIcon.textContent = "";
+  reviewsIcon.textContent = "";
+  
+  if (currentSortType === "sales") {
+    salesBtn.classList.add("active");
+    salesIcon.textContent = currentSortOrder === "desc" ? "↓" : "↑";
+  } else if (currentSortType === "price") {
+    priceBtn.classList.add("active");
+    priceIcon.textContent = currentSortOrder === "desc" ? "↓" : "↑";
+  } else if (currentSortType === "rating") {
+    ratingBtn.classList.add("active");
+    ratingIcon.textContent = currentSortOrder === "desc" ? "↓" : "↑";
+  } else if (currentSortType === "reviews") {
+    reviewsBtn.classList.add("active");
+    reviewsIcon.textContent = currentSortOrder === "desc" ? "↓" : "↑";
+  }
+}
+
 // Render the watchlist cards
 function renderWatchlist() {
   const container = document.getElementById("watchlistList");
   const countBadge = document.getElementById("watchlistCount");
+  const sortBar = document.getElementById("sortBar");
   
   chrome.runtime.sendMessage({ action: "WATCHLIST_GET" }, (response) => {
     if (response && response.success) {
       const watchlist = response.data;
-      const items = Object.values(watchlist);
+      let items = Object.values(watchlist);
       
       // Update count
       countBadge.textContent = items.length;
       
       if (items.length === 0) {
+        sortBar.style.display = "none";
         container.innerHTML = `
           <div class="empty-state">
             <p>${chrome.i18n.getMessage("noProductsSaved")}</p>
@@ -48,6 +123,37 @@ function renderWatchlist() {
           </div>
         `;
         return;
+      }
+      
+      // Show sort bar when items exist
+      sortBar.style.display = "flex";
+      
+      // Apply sorting
+      if (currentSortType !== "none" && currentSortOrder !== "none") {
+        items.sort((a, b) => {
+          let valA = 0;
+          let valB = 0;
+          
+          if (currentSortType === "sales") {
+            valA = a.estSales || 0;
+            valB = b.estSales || 0;
+          } else if (currentSortType === "price") {
+            valA = a.price || 0;
+            valB = b.price || 0;
+          } else if (currentSortType === "rating") {
+            valA = a.rating || 0;
+            valB = b.rating || 0;
+          } else if (currentSortType === "reviews") {
+            valA = a.reviewsCount || 0;
+            valB = b.reviewsCount || 0;
+          }
+          
+          if (currentSortOrder === "asc") {
+            return valA - valB;
+          } else {
+            return valB - valA;
+          }
+        });
       }
       
       // Clear empty states
@@ -71,7 +177,7 @@ function renderWatchlist() {
         
         card.innerHTML = `
           <div class="item-info">
-            <h4 class="item-title" title="${item.title}">${cleanTitle}</h4>
+            <h4 class="item-title" data-title="${item.title.replace(/"/g, '&quot;')}" title="${chrome.i18n.getMessage("copiedSuccess") || "Click to Copy"}">${cleanTitle}</h4>
             <div class="item-meta">
               <span>${labelAsin}: <strong>${item.asin}</strong></span>
               <span>${labelPrice}: <strong>${priceDisplay}</strong></span>
@@ -90,6 +196,16 @@ function renderWatchlist() {
         container.appendChild(card);
       });
       
+      // Bind copy event to title elements
+      document.querySelectorAll(".item-title").forEach(titleEl => {
+        titleEl.addEventListener("click", function() {
+          const fullTitle = this.getAttribute("data-title");
+          navigator.clipboard.writeText(fullTitle).then(() => {
+            showCopyToast();
+          });
+        });
+      });
+      
       // Bind delete events
       document.querySelectorAll(".btn-remove").forEach(btn => {
         btn.addEventListener("click", function() {
@@ -103,6 +219,21 @@ function renderWatchlist() {
       });
     }
   });
+}
+
+// Show micro copy-status toast notification
+function showCopyToast() {
+  const existing = document.querySelector(".copy-toast");
+  if (existing) existing.remove();
+  
+  const toast = document.createElement("div");
+  toast.className = "copy-toast";
+  toast.textContent = chrome.i18n.getMessage("copiedSuccess") || "Copied success!";
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.remove();
+  }, 1500);
 }
 
 // Trigger browser Blob download pipeline

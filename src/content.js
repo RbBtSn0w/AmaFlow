@@ -250,6 +250,23 @@ style.textContent = `
   .myfastm-toast-icon {
     font-size: 16px;
   }
+  .myfastm-copyable {
+    cursor: pointer;
+    user-select: text !important;
+    -webkit-user-select: text !important;
+  }
+  .myfastm-copyable:hover {
+    color: #38bdf8 !important;
+    text-decoration: underline;
+  }
+  .myfastm-th-sortable {
+    cursor: pointer;
+    user-select: none;
+  }
+  .myfastm-th-sortable:hover {
+    color: #f8fafc !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+  }
 `;
 document.head.appendChild(style);
 
@@ -609,22 +626,47 @@ function initSearchPageScanner() {
   });
 }
 
-function renderNicheModal(items, avgPrice, avgReviews, competitiveness) {
-  const backdrop = document.createElement("div");
-  backdrop.className = "myfastm-backdrop";
-  
-  const modal = document.createElement("div");
-  modal.className = "myfastm-modal";
-  
-  let tableRowsHTML = "";
-  items.forEach(item => {
+function updateNicheTable(items, sortField = 'rank', sortOrder = 'asc') {
+  const tableBody = document.getElementById("nicheTableBody");
+  if (!tableBody) return;
+
+  // Clone and sort items
+  const sortedItems = [...items].sort((a, b) => {
+    let valA, valB;
+    if (sortField === 'price') {
+      valA = a.price === null ? (sortOrder === 'asc' ? 999999 : -999999) : a.price;
+      valB = b.price === null ? (sortOrder === 'asc' ? 999999 : -999999) : b.price;
+    } else if (sortField === 'sales') {
+      valA = a.estSales || 0;
+      valB = b.estSales || 0;
+    } else if (sortField === 'rating') {
+      valA = a.rating || 0;
+      valB = b.rating || 0;
+    } else if (sortField === 'reviews') {
+      valA = a.reviewsCount || 0;
+      valB = b.reviewsCount || 0;
+    } else {
+      valA = a.rank || 0;
+      valB = b.rank || 0;
+    }
+
+    if (sortOrder === 'asc') {
+      return valA - valB;
+    } else {
+      return valB - valA;
+    }
+  });
+
+  // Re-render HTML
+  let html = "";
+  sortedItems.forEach(item => {
     const ratingDisplay = item.rating ? `${item.rating} ⭐` : "N/A";
     const reviewsDisplay = item.reviewsCount ? item.reviewsCount.toLocaleString() : "0";
     
-    tableRowsHTML += `
+    html += `
       <tr class="myfastm-tr-item" data-reviews="${item.reviewsCount}">
         <td style="font-weight: 700;">${item.asin}</td>
-        <td style="max-width: 250px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;" title="${item.title}">${item.title}</td>
+        <td class="myfastm-copyable myfastm-niche-title" data-asin="${item.asin}" style="max-width: 250px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;" title="${getMsg("copiedSuccess") || "Click to Copy"}">${item.title}</td>
         <td>${item.price ? "$" + item.price.toFixed(2) : "N/A"}</td>
         <td>${ratingDisplay}</td>
         <td>${reviewsDisplay}</td>
@@ -633,6 +675,71 @@ function renderNicheModal(items, avgPrice, avgReviews, competitiveness) {
       </tr>
     `;
   });
+  tableBody.innerHTML = html;
+
+  // Re-bind save event
+  tableBody.querySelectorAll(".table-save-btn").forEach(btn => {
+    btn.addEventListener("click", function() {
+      const targetAsin = this.getAttribute("data-asin");
+      const matched = items.find(i => i.asin === targetAsin);
+      if (matched) {
+        const itemPayload = {
+          asin: matched.asin,
+          title: matched.title,
+          category: "Search Page Scraped",
+          bsr: matched.rank,
+          price: matched.price,
+          rating: matched.rating,
+          reviewsCount: matched.reviewsCount,
+          estSales: matched.estSales,
+          estWeeklySales: matched.estWeeklySales
+        };
+        safeSendMessage({ action: "WATCHLIST_ADD", payload: itemPayload }, (res) => {
+          if (res && res.success) {
+            this.textContent = getMsg("saved", "Saved ✓");
+            this.style.background = "#10b981";
+            this.disabled = true;
+          }
+        });
+      }
+    });
+  });
+
+  // Re-bind title copy event
+  tableBody.querySelectorAll(".myfastm-niche-title").forEach(td => {
+    td.addEventListener("click", function() {
+      const targetAsin = this.getAttribute("data-asin");
+      const matched = items.find(i => i.asin === targetAsin);
+      if (matched) {
+        navigator.clipboard.writeText(matched.title).then(() => {
+          showNotification(getMsg("copiedSuccess", "Title copied!"), "success");
+        });
+      }
+    });
+  });
+
+  // Apply the review filters
+  const filterInput = document.getElementById("reviewFilterInput");
+  if (filterInput && filterInput.value) {
+    const maxVal = parseInt(filterInput.value);
+    const rows = tableBody.querySelectorAll(".myfastm-tr-item");
+    rows.forEach(row => {
+      const val = parseInt(row.getAttribute("data-reviews"));
+      if (isNaN(maxVal) || val <= maxVal) {
+        row.style.display = "";
+      } else {
+        row.style.display = "none";
+      }
+    });
+  }
+}
+
+function renderNicheModal(items, avgPrice, avgReviews, competitiveness) {
+  const backdrop = document.createElement("div");
+  backdrop.className = "myfastm-backdrop";
+  
+  const modal = document.createElement("div");
+  modal.className = "myfastm-modal";
   
   modal.innerHTML = `
     <div class="myfastm-modal-header">
@@ -666,15 +773,15 @@ function renderNicheModal(items, avgPrice, avgReviews, competitiveness) {
           <tr>
             <th>${getMsg("asin", "ASIN")}</th>
             <th>${getMsg("title", "Title")}</th>
-            <th>${getMsg("price", "Price")}</th>
-            <th>${getMsg("rating", "Rating")}</th>
-            <th>${getMsg("reviews", "Reviews")}</th>
-            <th>${getMsg("estSalesMoWk", "Est. Sales (Mo / Wk)")}</th>
+            <th class="myfastm-th-sortable" id="nicheSortPrice" data-order="none">${getMsg("price", "Price")} <span class="sort-indicator"></span></th>
+            <th class="myfastm-th-sortable" id="nicheSortRating" data-order="none">${getMsg("rating", "Rating")} <span class="sort-indicator"></span></th>
+            <th class="myfastm-th-sortable" id="nicheSortReviews" data-order="none">${getMsg("reviews", "Reviews")} <span class="sort-indicator"></span></th>
+            <th class="myfastm-th-sortable" id="nicheSortSales" data-order="none">${getMsg("estSalesMoWk", "Est. Sales (Mo / Wk)")} <span class="sort-indicator"></span></th>
             <th>${getMsg("action", "Action")}</th>
           </tr>
         </thead>
         <tbody id="nicheTableBody">
-          ${tableRowsHTML}
+          <!-- Populated dynamically -->
         </tbody>
       </table>
     </div>
@@ -682,6 +789,9 @@ function renderNicheModal(items, avgPrice, avgReviews, competitiveness) {
   
   document.body.appendChild(backdrop);
   document.body.appendChild(modal);
+  
+  // Initial render
+  updateNicheTable(items);
   
   const destroy = () => {
     backdrop.remove();
@@ -703,32 +813,67 @@ function renderNicheModal(items, avgPrice, avgReviews, competitiveness) {
       }
     });
   });
-  
-  document.querySelectorAll(".table-save-btn").forEach(btn => {
-    btn.addEventListener("click", function() {
-      const targetAsin = this.getAttribute("data-asin");
-      const matched = items.find(i => i.asin === targetAsin);
-      if (matched) {
-        const itemPayload = {
-          asin: matched.asin,
-          title: matched.title,
-          category: "Search Page Scraped",
-          bsr: matched.rank,
-          price: matched.price,
-          rating: matched.rating,
-          reviewsCount: matched.reviewsCount,
-          estSales: matched.estSales,
-          estWeeklySales: matched.estWeeklySales
-        };
-        safeSendMessage({ action: "WATCHLIST_ADD", payload: itemPayload }, (res) => {
-          if (res && res.success) {
-            this.textContent = getMsg("saved", "Saved ✓");
-            this.style.background = "#10b981";
-            this.disabled = true;
-          }
-        });
-      }
-    });
+
+  // Set up sorting logic
+  let currentSort = { field: 'rank', order: 'asc' };
+  const priceHeader = document.getElementById("nicheSortPrice");
+  const salesHeader = document.getElementById("nicheSortSales");
+  const ratingHeader = document.getElementById("nicheSortRating");
+  const reviewsHeader = document.getElementById("nicheSortReviews");
+
+  function resetHeaderIndicators() {
+    priceHeader.querySelector(".sort-indicator").textContent = "";
+    salesHeader.querySelector(".sort-indicator").textContent = "";
+    ratingHeader.querySelector(".sort-indicator").textContent = "";
+    reviewsHeader.querySelector(".sort-indicator").textContent = "";
+  }
+
+  priceHeader.addEventListener("click", () => {
+    if (currentSort.field === 'price') {
+      currentSort.order = currentSort.order === 'asc' ? 'desc' : 'asc';
+    } else {
+      currentSort.field = 'price';
+      currentSort.order = 'desc';
+    }
+    resetHeaderIndicators();
+    priceHeader.querySelector(".sort-indicator").textContent = currentSort.order === 'asc' ? " ▲" : " ▼";
+    updateNicheTable(items, 'price', currentSort.order);
+  });
+
+  salesHeader.addEventListener("click", () => {
+    if (currentSort.field === 'sales') {
+      currentSort.order = currentSort.order === 'asc' ? 'desc' : 'asc';
+    } else {
+      currentSort.field = 'sales';
+      currentSort.order = 'desc';
+    }
+    resetHeaderIndicators();
+    salesHeader.querySelector(".sort-indicator").textContent = currentSort.order === 'asc' ? " ▲" : " ▼";
+    updateNicheTable(items, 'sales', currentSort.order);
+  });
+
+  ratingHeader.addEventListener("click", () => {
+    if (currentSort.field === 'rating') {
+      currentSort.order = currentSort.order === 'asc' ? 'desc' : 'asc';
+    } else {
+      currentSort.field = 'rating';
+      currentSort.order = 'desc';
+    }
+    resetHeaderIndicators();
+    ratingHeader.querySelector(".sort-indicator").textContent = currentSort.order === 'asc' ? " ▲" : " ▼";
+    updateNicheTable(items, 'rating', currentSort.order);
+  });
+
+  reviewsHeader.addEventListener("click", () => {
+    if (currentSort.field === 'reviews') {
+      currentSort.order = currentSort.order === 'asc' ? 'desc' : 'asc';
+    } else {
+      currentSort.field = 'reviews';
+      currentSort.order = 'desc';
+    }
+    resetHeaderIndicators();
+    reviewsHeader.querySelector(".sort-indicator").textContent = currentSort.order === 'asc' ? " ▲" : " ▼";
+    updateNicheTable(items, 'reviews', currentSort.order);
   });
 }
 
@@ -995,74 +1140,53 @@ function initCategoryPageScanner() {
   });
 }
 
-function renderCategoryTrendsModal(items, category) {
-  const backdrop = document.createElement("div");
-  backdrop.className = "myfastm-backdrop";
-  
-  const modal = document.createElement("div");
-  modal.className = "myfastm-modal";
-  
-  let tableRowsHTML = "";
-  items.forEach(item => {
-    const ratingDisplay = item.rating ? `${item.rating} ⭐` : "N/A";
-    
-    tableRowsHTML += `
+function updateCategoryTable(items, category, sortField = 'rank', sortOrder = 'asc') {
+  const tableBody = document.getElementById("categoryTableBody");
+  if (!tableBody) return;
+
+  // Clone and sort items
+  const sortedItems = [...items].sort((a, b) => {
+    let valA, valB;
+    if (sortField === 'price') {
+      valA = a.price === null ? (sortOrder === 'asc' ? 999999 : -999999) : a.price;
+      valB = b.price === null ? (sortOrder === 'asc' ? 999999 : -999999) : b.price;
+    } else if (sortField === 'sales') {
+      valA = a.estSales || 0;
+      valB = b.estSales || 0;
+    } else {
+      valA = a.rank || 0;
+      valB = b.rank || 0;
+    }
+
+    if (sortOrder === 'asc') {
+      return valA - valB;
+    } else {
+      return valB - valA;
+    }
+  });
+
+  let html = "";
+  sortedItems.forEach(item => {
+    const isChecked = item.checked ? "checked" : "";
+    html += `
       <tr class="myfastm-tr-item">
         <td>
-          <input type="checkbox" class="trend-toggle-checkbox" data-asin="${item.asin}" checked style="cursor: pointer; width: 16px; height: 16px;">
+          <input type="checkbox" class="trend-toggle-checkbox" data-asin="${item.asin}" ${isChecked} style="cursor: pointer; width: 16px; height: 16px;">
         </td>
         <td style="font-weight: 700; color: #38bdf8;">#${item.rank}</td>
         <td style="font-weight: 600;">${item.asin}</td>
-        <td style="max-width: 260px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;" title="${item.title}">${item.title}</td>
+        <td class="myfastm-copyable myfastm-category-title" data-asin="${item.asin}" style="max-width: 260px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;" title="${getMsg("copiedSuccess") || "Click to Copy"}">${item.title}</td>
         <td>${item.price ? "$" + item.price.toFixed(2) : "N/A"}</td>
         <td style="font-weight: 700; color: #38bdf8;">${item.estSales.toLocaleString()} / <span style="color:#f97316;">${item.estWeeklySales.toLocaleString()}</span></td>
         <td><button class="myfastm-btn myfastm-btn-secondary table-save-btn" data-asin="${item.asin}" style="margin: 0; padding: 4px 8px; font-size: 11px;">${getMsg("watch", "Watch")}</button></td>
       </tr>
     `;
   });
-  
-  modal.innerHTML = `
-    <div class="myfastm-modal-header">
-      <span class="myfastm-modal-title">${getMsg("categoryTrends", "Category Trends")}: ${category} (Top 10)</span>
-      <button class="myfastm-close" id="myfastmModalCloseBtn">&times;</button>
-    </div>
-    
-    <div id="myfastmSvgContainer" style="margin-bottom: 20px;"></div>
-    
-    <div class="myfastm-table-wrap">
-      <table class="myfastm-table">
-        <thead>
-          <tr>
-            <th style="width: 40px;">${getMsg("plot", "Plot")}</th>
-            <th style="width: 50px;">${getMsg("rank", "Rank")}</th>
-            <th style="width: 90px;">${getMsg("asin", "ASIN")}</th>
-            <th>${getMsg("title", "Title")}</th>
-            <th>${getMsg("price", "Price")}</th>
-            <th>${getMsg("estSalesMoWk", "Est. Sales (Mo / Wk)")}</th>
-            <th>${getMsg("action", "Action")}</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${tableRowsHTML}
-        </tbody>
-      </table>
-    </div>
-  `;
-  
-  document.body.appendChild(backdrop);
-  document.body.appendChild(modal);
-  
+  tableBody.innerHTML = html;
+
+  // Re-bind SVG update check
   const svgContainer = document.getElementById("myfastmSvgContainer");
-  svgContainer.innerHTML = generateSVGChart(items);
-  
-  const destroy = () => {
-    backdrop.remove();
-    modal.remove();
-  };
-  backdrop.addEventListener("click", destroy);
-  document.getElementById("myfastmModalCloseBtn").addEventListener("click", destroy);
-  
-  document.querySelectorAll(".trend-toggle-checkbox").forEach(cb => {
+  tableBody.querySelectorAll(".trend-toggle-checkbox").forEach(cb => {
     cb.addEventListener("change", function() {
       const targetAsin = this.getAttribute("data-asin");
       const matched = items.find(i => i.asin === targetAsin);
@@ -1072,8 +1196,9 @@ function renderCategoryTrendsModal(items, category) {
       }
     });
   });
-  
-  document.querySelectorAll(".table-save-btn").forEach(btn => {
+
+  // Re-bind save event
+  tableBody.querySelectorAll(".table-save-btn").forEach(btn => {
     btn.addEventListener("click", function() {
       const targetAsin = this.getAttribute("data-asin");
       const matched = items.find(i => i.asin === targetAsin);
@@ -1098,6 +1223,105 @@ function renderCategoryTrendsModal(items, category) {
         });
       }
     });
+  });
+
+  // Re-bind title copy event
+  tableBody.querySelectorAll(".myfastm-category-title").forEach(td => {
+    td.addEventListener("click", function() {
+      const targetAsin = this.getAttribute("data-asin");
+      const matched = items.find(i => i.asin === targetAsin);
+      if (matched) {
+        navigator.clipboard.writeText(matched.title).then(() => {
+          showNotification(getMsg("copiedSuccess", "Title copied!"), "success");
+        });
+      }
+    });
+  });
+}
+
+function renderCategoryTrendsModal(items, category) {
+  const backdrop = document.createElement("div");
+  backdrop.className = "myfastm-backdrop";
+  
+  const modal = document.createElement("div");
+  modal.className = "myfastm-modal";
+  
+  modal.innerHTML = `
+    <div class="myfastm-modal-header">
+      <span class="myfastm-modal-title">${getMsg("categoryTrends", "Category Trends")}: ${category} (Top 10)</span>
+      <button class="myfastm-close" id="myfastmModalCloseBtn">&times;</button>
+    </div>
+    
+    <div id="myfastmSvgContainer" style="margin-bottom: 20px;"></div>
+    
+    <div class="myfastm-table-wrap">
+      <table class="myfastm-table">
+        <thead>
+          <tr>
+            <th style="width: 40px;">${getMsg("plot", "Plot")}</th>
+            <th style="width: 50px;">${getMsg("rank", "Rank")}</th>
+            <th style="width: 90px;">${getMsg("asin", "ASIN")}</th>
+            <th>${getMsg("title", "Title")}</th>
+            <th class="myfastm-th-sortable" id="catSortPrice" data-order="none">${getMsg("price", "Price")} <span class="sort-indicator"></span></th>
+            <th class="myfastm-th-sortable" id="catSortSales" data-order="none">${getMsg("estSalesMoWk", "Est. Sales (Mo / Wk)")} <span class="sort-indicator"></span></th>
+            <th>${getMsg("action", "Action")}</th>
+          </tr>
+        </thead>
+        <tbody id="categoryTableBody">
+          <!-- Populated dynamically -->
+        </tbody>
+      </table>
+    </div>
+  `;
+  
+  document.body.appendChild(backdrop);
+  document.body.appendChild(modal);
+  
+  const svgContainer = document.getElementById("myfastmSvgContainer");
+  svgContainer.innerHTML = generateSVGChart(items);
+  
+  // Initial render
+  updateCategoryTable(items, category);
+  
+  const destroy = () => {
+    backdrop.remove();
+    modal.remove();
+  };
+  backdrop.addEventListener("click", destroy);
+  document.getElementById("myfastmModalCloseBtn").addEventListener("click", destroy);
+
+  // Set up sorting logic
+  let currentSort = { field: 'rank', order: 'asc' };
+  const priceHeader = document.getElementById("catSortPrice");
+  const salesHeader = document.getElementById("catSortSales");
+
+  function resetHeaderIndicators() {
+    priceHeader.querySelector(".sort-indicator").textContent = "";
+    salesHeader.querySelector(".sort-indicator").textContent = "";
+  }
+
+  priceHeader.addEventListener("click", () => {
+    if (currentSort.field === 'price') {
+      currentSort.order = currentSort.order === 'asc' ? 'desc' : 'asc';
+    } else {
+      currentSort.field = 'price';
+      currentSort.order = 'desc';
+    }
+    resetHeaderIndicators();
+    priceHeader.querySelector(".sort-indicator").textContent = currentSort.order === 'asc' ? " ▲" : " ▼";
+    updateCategoryTable(items, category, 'price', currentSort.order);
+  });
+
+  salesHeader.addEventListener("click", () => {
+    if (currentSort.field === 'sales') {
+      currentSort.order = currentSort.order === 'asc' ? 'desc' : 'asc';
+    } else {
+      currentSort.field = 'sales';
+      currentSort.order = 'desc';
+    }
+    resetHeaderIndicators();
+    salesHeader.querySelector(".sort-indicator").textContent = currentSort.order === 'asc' ? " ▲" : " ▼";
+    updateCategoryTable(items, category, 'sales', currentSort.order);
   });
 }
 

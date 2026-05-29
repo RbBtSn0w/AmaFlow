@@ -32,5 +32,9 @@
   "categoryTrends": { "message": "类目趋势分析" },
   "errorNoBestsellers": { "message": "未能在此页面找到热卖商品，请等网页完全加载完毕后再试。" },
   "errorNoSearchProducts": { "message": "未能在此搜索结果页找到商品，请等网页完全加载完毕后再试。" },
-  "errorContextInvalidated": { "message": "选品助手已更新或重载，请刷新当前网页以继续使用。" }
+  "errorContextInvalidated": { "message": "选品助手已更新或重载，请刷新当前网页以继续使用。" },
+  "sortBy": { "message": "排序方式" },
+  "sortBySales": { "message": "销量" },
+  "sortByPrice": { "message": "价格" },
+  "copiedSuccess": { "message": "复制成功！" }
 }

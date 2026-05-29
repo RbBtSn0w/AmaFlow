@@ -32,5 +32,9 @@
   "categoryTrends": { "message": "Category Trends" },
   "errorNoBestsellers": { "message": "Unable to find best seller products on the page. Please wait for the page to finish loading and try again." },
   "errorNoSearchProducts": { "message": "No products found on the search results page. Please wait for the page to finish loading and try again." },
-  "errorContextInvalidated": { "message": "The selection assistant has been updated or reloaded. Please refresh the current page to continue." }
+  "errorContextInvalidated": { "message": "The selection assistant has been updated or reloaded. Please refresh the current page to continue." },
+  "sortBy": { "message": "Sort By" },
+  "sortBySales": { "message": "Sales" },
+  "sortByPrice": { "message": "Price" },
+  "copiedSuccess": { "message": "Copied success!" }
 }

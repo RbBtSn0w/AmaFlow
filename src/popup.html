@@ -22,6 +22,21 @@
           <span data-i18n="savedProducts">Saved Products</span> 
           <span class="badge" id="watchlistCount">0</span>
         </div>
+        <div class="sort-bar" id="sortBar" style="display: none;">
+          <span data-i18n="sortBy">Sort By:</span>
+          <button class="sort-btn active" id="sortSalesBtn" data-type="sales" data-order="desc">
+            <span data-i18n="sortBySales">Sales</span> <span class="sort-icon">↓</span>
+          </button>
+          <button class="sort-btn" id="sortPriceBtn" data-type="price" data-order="none">
+            <span data-i18n="sortByPrice">Price</span> <span class="sort-icon"></span>
+          </button>
+          <button class="sort-btn" id="sortRatingBtn" data-type="rating" data-order="none">
+            <span data-i18n="rating">Rating</span> <span class="sort-icon"></span>
+          </button>
+          <button class="sort-btn" id="sortReviewsBtn" data-type="reviews" data-order="none">
+            <span data-i18n="reviews">Reviews</span> <span class="sort-icon"></span>
+          </button>
+        </div>
         <div class="watchlist-list" id="watchlistList">
           <!-- Populated dynamically via JS -->
         </div>
